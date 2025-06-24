@@ -1,5 +1,5 @@
 # Robots-can-adapt-like-animals
-Minimal Re-implementation of the evolutionary algorithm "Iterative Trial &amp; Error" by **Cully et al. 2015** (MAP‑Elites + Map‑Based BO) for gait generation and adaption after damage
+Minimal Re-implementation of the evolutionary algorithm "Intelligent Trial &amp; Error" by **Cully et al. 2015** (MAP‑Elites + Map‑Based BO) for gait generation and adaption after damage
 
 
 > **Notes** The env is the bullet‑based Ant from [QDgym](https://github.com/ollebompa/QDgym).

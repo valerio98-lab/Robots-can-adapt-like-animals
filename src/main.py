@@ -6,7 +6,7 @@ from map_elites import MapElites
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run the Iterative trial and error algorithm"
+        description="Run the Intelligent trial and error algorithm"
     )
     parser.add_argument(
         "--generate_map",
