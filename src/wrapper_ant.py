@@ -22,13 +22,22 @@ class DamagedAnt(gym.Wrapper):
         self, env_name="QDAntBulletEnv-v0", leg_name="front_left", render=False
     ):
         super().__init__(gym.make(env_name, render=render))
-        self.leg_name = leg_name
-        self.leg_idx = LEG_IDX[leg_name]
         self.sleep = render
+        self.leg_name = leg_name
+        if isinstance(self.leg_name, list):
+            self.leg_idx = [LEG_IDX[leg] for leg in self.leg_name if leg in LEG_IDX]
+        elif self.leg_name in LEG_IDX:
+            self.leg_idx = [LEG_IDX[self.leg_name]]
+        else:
+            self.leg_idx = []
 
     def step(self, action):
         action = np.float32(action).copy()
-        action[list(self.leg_idx)] = 0.0  # set the joint to zero
+        if self.leg_idx:
+            if isinstance(self.leg_idx[0], tuple):
+                for idx in np.ravel(self.leg_idx):
+                    action[idx] = 0.0
+
         obs, rew, done, info = super().step(action)
         if self.sleep:
             time.sleep(1 / 60)

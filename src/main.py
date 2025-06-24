@@ -33,9 +33,10 @@ def main():
     )
     parser.add_argument(
         "--damaged_leg",
+        nargs="+",
         type=str,
-        default="back_left",
-        help="Name of the leg to damage in the ant robot",
+        default="",
+        help="Name(s) of the leg(s) to damage in the ant robot. Accepts one or more names (e.g. --damaged_leg front_left back_right)",
     )
     parser.add_argument(
         "--training_render",
