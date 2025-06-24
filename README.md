@@ -41,7 +41,11 @@ pyenv virtualenv 3.9 <name-env>
 ```
 
 ```bash
-pip3 install git+https://github.com/ollenilsson19/QDgym.git#egg=QDgym
+pip install -r requirements.txt
+```
+
+```bash
+pip install git+https://github.com/ollenilsson19/QDgym.git#egg=QDgym --no-deps
 ```
 
 > **Why the old NumPy?** QDgym wheels are compiled against 1.19.5.
