@@ -31,6 +31,14 @@ class DamagedAnt(gym.Wrapper):
         else:
             self.leg_idx = []
 
+        self.contacts = []
+
+    def reset(self, **kwargs):
+        self.contacts.clear()
+        self.tot_reward = 0.0
+        self.desc = np.zeros((4,), dtype=np.float32)
+        return super().reset(**kwargs)
+
     def step(self, action):
         action = np.float32(action).copy()
         if self.leg_idx:
@@ -39,7 +47,23 @@ class DamagedAnt(gym.Wrapper):
                     action[idx] = 0.0
 
         obs, rew, done, info = super().step(action)
+        self.contacts.append(np.asarray(info["bc"], dtype=bool))
+        self.tot_reward += rew
+
+        if done:
+            contacts_arr = np.vstack(self.contacts)
+            self.desc = contacts_arr.mean(axis=0).astype(np.float32)
+
         if self.sleep:
             time.sleep(1 / 60)
 
         return obs, rew, done, info
+
+    def duty_factor(self, contacts):
+        """
+        Returns the duty factor of the ant robot.
+        The duty factor is the ratio of the time a leg is in contact with the ground to the total cycle time.
+        """
+        return contacts.mean(axis=0).astype(
+            np.float32
+        )  # Average over all legs shape (4,)

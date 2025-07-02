@@ -1,7 +1,8 @@
 import numpy as np
 import random
-import gym
 import QDgym
+
+from wrapper_ant import DamagedAnt
 from tqdm import tqdm
 from joblib import Parallel, delayed
 
@@ -35,7 +36,11 @@ class MapElites:
         self.render = render
         self.n_jobs = n_jobs if render == False else 1
 
-        self.env = gym.make(self.env_name, render=self.render)
+        self.env = DamagedAnt(
+            env_name=self.env_name,
+            leg_name=None,
+            render=self.render,
+        )
         self.archive = {}
 
     def bd_to_cell(self, bd):
@@ -73,20 +78,20 @@ class MapElites:
             )
             for theta, (fitness, bd) in zip(thetas, results):
                 cell = self.bd_to_cell(bd)
-                best = self.archive.get(cell, (-np.inf, None))
+                best = self.archive.get(cell, (-np.inf, None, None))
                 if fitness > best[0]:
-                    self.archive[cell] = (fitness, theta)
+                    self.archive[cell] = (fitness, theta, bd)
                 evals += 1
                 if evals % 1000 == 0:
                     print(f"{evals:,} evaluations - filled {len(self.archive)} cells")
             pbar.update(self.batch_size)
 
         cells, fits, params, descs = [], [], [], []
-        for cell, (fit, theta) in self.archive.items():
+        for cell, (fit, theta, bd) in self.archive.items():
             cells.append(cell)
             fits.append(fit)
             params.append(theta)
-            descs.append(np.array(cell) / (self.n_buckets - 1))
+            descs.append(np.array(bd))
 
         np.savez(
             "map_ant.npz",

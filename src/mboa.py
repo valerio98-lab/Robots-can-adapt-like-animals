@@ -18,7 +18,7 @@ class MBOA:
         map_file="map_ant.npz",
         damaged_leg="back_left",
         max_trials=20,
-        kappa=0.5,
+        kappa=0.05,
         alpha_gp=1e-4,
         render=False,
     ):
@@ -38,7 +38,7 @@ class MBOA:
         )
         self.best_sim = self.fit_map.max()
 
-        self.kernel = 1.0 * Matern(nu=2.5, length_scale_bounds=(1e-6, 1e2))
+        self.kernel = 1.0 * Matern(length_scale=0.4, nu=2.5)
         self.gp = GaussianProcessRegressor(
             self.kernel, alpha=self.alpha_gp, normalize_y=True
         )
