@@ -1,3 +1,4 @@
 *.npz
 *.ipynb
+*.pt
 __pycache__/

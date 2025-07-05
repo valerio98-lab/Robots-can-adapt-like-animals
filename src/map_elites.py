@@ -1,12 +1,22 @@
 import numpy as np
 import random
 import QDgym
+import torch
 
 from wrapper_ant import DamagedAnt
 from tqdm import tqdm
 from joblib import Parallel, delayed
 
 from controller import CPG
+
+from autoencoder import AutoEncoder
+
+ENC_PATH = "ae_final.pt"
+LATENT_DIM = 2
+
+encoder = AutoEncoder(latent_dim=LATENT_DIM)
+encoder.load_state_dict(torch.load(ENC_PATH, map_location="cpu"))
+encoder.eval()
 
 
 class MapElites:
@@ -44,9 +54,15 @@ class MapElites:
         self.archive = {}
 
     def bd_to_cell(self, bd):
-        idx = np.floor(bd * self.n_buckets).astype(int)
+        z = (
+            encoder.encoder(torch.from_numpy(bd * 2.0 - 1.0).float().to("cpu"))
+            .cpu()
+            .numpy()
+        )
+        z_norm = (z + 1.0) / 2.0
+        idx = np.floor(z_norm * self.n_buckets).astype(int)
         idx = np.clip(idx, 0, self.n_buckets - 1)
-        return tuple(idx)
+        return tuple(idx), z
 
     def evaluate(self, theta):
         ctrl = CPG(theta)
@@ -77,27 +93,28 @@ class MapElites:
                 delayed(self.evaluate)(theta) for theta in thetas
             )
             for theta, (fitness, bd) in zip(thetas, results):
-                cell = self.bd_to_cell(bd)
+                cell, z = self.bd_to_cell(bd)
                 best = self.archive.get(cell, (-np.inf, None, None))
                 if fitness > best[0]:
-                    self.archive[cell] = (fitness, theta, bd)
+                    self.archive[cell] = (fitness, theta, z)
                 evals += 1
-                if evals % 1000 == 0:
+                if evals % 10000 == 0:
                     print(f"{evals:,} evaluations - filled {len(self.archive)} cells")
             pbar.update(self.batch_size)
 
-        cells, fits, params, descs = [], [], [], []
-        for cell, (fit, theta, bd) in self.archive.items():
+        cells, fits, params, descs, latents = [], [], [], [], []
+        for cell, (fit, theta, z) in self.archive.items():
             cells.append(cell)
             fits.append(fit)
             params.append(theta)
+            latents.append(z)
             descs.append(np.array(bd))
 
         np.savez(
             "map_ant.npz",
             theta=np.vstack(params),
             fitness=np.array(fits),
-            bd=np.vstack(descs),
+            latent=np.vstack(latents),
             cells=np.array(cells),
         )
         self.env.close()
